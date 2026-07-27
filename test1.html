@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233b82f6'/%3E%3Cstop offset='100%25' stop-color='%237dd3fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='%230b0e14'/%3E%3Crect x='10' y='10' width='80' height='80' rx='12' fill='url(%23g)'/%3E%3Ctext x='50' y='70' font-family='Arial, sans-serif' font-size='50' font-weight='bold' fill='%23ffffff' text-anchor='middle'%3E⚡%3C/text%3E%3C/svg%3E">
+    <title>Auto Withdraw Pending</title>
+    <style>
+        /* --- Reset & Font --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0e14;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #e8edf5;
+        }
+        .app-card {
+            max-width: 820px;
+            width: 100%;
+            background: rgba(18, 24, 33, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 32px 36px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s;
+        }
+        @media (max-width: 600px) {
+            .app-card {
+                padding: 24px 18px;
+                border-radius: 20px;
+            }
+        }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 16px;
+        }
+        .header-left h1 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #f0f4ff, #b0caff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-left h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            background: rgba(255,255,255,0.08);
+            padding: 2px 12px;
+            border-radius: 40px;
+            -webkit-text-fill-color: #bcc9e0;
+            color: #bcc9e0;
+            letter-spacing: 0.3px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .header-right .badge {
+            background: rgba(56, 189, 248, 0.15);
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: #7dd3fc;
+            font-weight: 500;
+            font-size: 12px;
+            letter-spacing: 0.4px;
+        }
+
+        /* --- Info Strip --- */
+        .info-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 32px;
+            background: rgba(255,255,255,0.03);
+            padding: 12px 18px;
+            border-radius: 16px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .info-item .label {
+            color: #7a8aa3;
+            font-weight: 400;
+        }
+        .info-item .value {
+            color: #e8edf5;
+            font-weight: 500;
+        }
+        .info-item .value.highlight {
+            color: #7dd3fc;
+        }
+
+        /* --- Type Selector (XPAY / MINERA) --- */
+        .type-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .type-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #94a3b8;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.2px;
+            backdrop-filter: blur(4px);
+        }
+        .type-btn:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.15);
+            color: #d6e0f0;
+        }
+        .type-btn.active {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: #7dd3fc;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.05);
+        }
+        .type-btn.active.xpay-active {
+            border-color: #34d399;
+            color: #34d399;
+            background: rgba(52, 211, 153, 0.1);
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.05);
+        }
+        .type-btn.active.minera-active {
+            border-color: #fbbf24;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.05);
+        }
+        .type-btn .icon {
+            font-size: 18px;
+        }
+
+        /* --- Tab Navigation --- */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 14px;
+            padding: 5px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            color: #7a8aa3;
+            font-weight: 500;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tab-btn:hover {
+            color: #d6e0f0;
+            background: rgba(255,255,255,0.04);
+        }
+        .tab-btn.active {
+            background: #1e293b;
+            color: #f0f4ff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* --- Content Area --- */
+        .tab-content {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            0% { opacity: 0.4; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .textarea-wrapper {
+            position: relative;
+        }
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px 18px;
+            background: #111822;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            color: #d6e0f0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border 0.2s;
+            outline: none;
+        }
+        textarea:focus {
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.08);
+        }
+        textarea::placeholder {
+            color: #4a5a73;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            align-items: center;
+        }
+        .btn-primary {
+            padding: 12px 28px;
+            background: #2563eb;
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            background: #3b82f6;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-secondary {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            color: #bcc9e0;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            color: #e8edf5;
+        }
+
+        /* --- Result Box --- */
+        .result-box {
+            background: #0d121b;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 20px 22px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13.5px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            max-height: 460px;
+            overflow-y: auto;
+            color: #d6e0f0;
+            margin-bottom: 18px;
+        }
+        .result-box::-webkit-scrollbar {
+            width: 5px;
+        }
+        .result-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .result-box::-webkit-scrollbar-thumb {
+            background: #2a3a52;
+            border-radius: 10px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .result-header .label {
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .result-header .chip {
+            background: rgba(56, 189, 248, 0.1);
+            padding: 2px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #7dd3fc;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+        }
+        .chip.xpay-chip {
+            color: #34d399;
+            border-color: rgba(52, 211, 153, 0.25);
+            background: rgba(52, 211, 153, 0.08);
+        }
+        .chip.minera-chip {
+            color: #fbbf24;
+            border-color: rgba(251, 191, 36, 0.25);
+            background: rgba(251, 191, 36, 0.08);
+        }
+
+        .copy-feedback {
+            color: #34d399;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* --- Debug --- */
+        .debug-toggle {
+            font-size: 12px;
+            color: #4a5a73;
+            cursor: pointer;
+            margin-top: 12px;
+            display: inline-block;
+            background: rgba(255,255,255,0.02);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: 0.2s;
+        }
+        .debug-toggle:hover {
+            color: #94a3b8;
+            border-color: rgba(255,255,255,0.1);
+        }
+        .debug-panel {
+            display: none;
+            background: #0a0f17;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-top: 12px;
+            font-size: 12px;
+            font-family: monospace;
+            color: #94a3b8;
+            max-height: 240px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        .debug-panel.open {
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 480px) {
+            .header-left h1 {
+                font-size: 18px;
+                flex-wrap: wrap;
+            }
+            .info-strip {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .type-selector {
+                flex-direction: column;
+            }
+            .tab-nav {
+                flex-direction: column;
+                gap: 2px;
+            }
+            .action-row {
+                flex-direction: column;
+            }
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-card">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>
+                    ⚡ Auto Withdraw
+                    <small>Pending</small>
+                </h1>
+            </div>
+            <div class="header-right">
+                <span class="badge">● Live</span>
+                <span>v2.0</span>
+            </div>
+        </div>
+
+        <!-- Info Strip -->
+        <div class="info-strip">
+            <div class="info-item">
+                <span class="label">Info</span>
+                <span class="value">HOKIJITU</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Perihal</span>
+                <span class="value highlight" id="perihalDisplay">Transaksi Auto Withdraw Xpay Pending</span>
+            </div>
+        </div>
+
+        <!-- Type Selector -->
+        <div class="type-selector">
+            <button class="type-btn active xpay-active" data-type="xpay" id="btnXpay">
+                <span class="icon">💳</span> XPAY
+            </button>
+            <button class="type-btn" data-type="minera" id="btnMinera">
+                <span class="icon">💸</span> MINERA
+            </button>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="input">📥 Input Data</button>
+            <button class="tab-btn" data-tab="result">📄 Hasil Format</button>
+        </div>
+
+        <!-- Tab Content: Input -->
+        <div class="tab-content active" id="tabInput">
+            <div class="textarea-wrapper">
+                <textarea id="dataInput" placeholder="Paste data dari tabel (header boleh ikut) ..."></textarea>
+            </div>
+            <div class="action-row">
+                <button class="btn-primary" onclick="generateResult()">
+                    <span>🔍</span> Generate Format
+                </button>
+                <span class="debug-toggle" onclick="toggleDebug()">⚙️ Debug info</span>
+            </div>
+            <div class="debug-panel" id="debugPanel"></div>
+        </div>
+
+        <!-- Tab Content: Result -->
+        <div class="tab-content" id="tabResult">
+            <div class="result-header">
+                <div class="label">
+                    📄 Hasil
+                    <span class="chip xpay-chip" id="resultTypeBadge">XPAY</span>
+                </div>
+                <div>
+                    <button class="btn-secondary" onclick="copyResult()" style="padding: 8px 18px;">
+                        📋 Copy All
+                    </button>
+                    <span class="copy-feedback" id="copyFeedback">✓ Disalin!</span>
+                </div>
+            </div>
+            <div class="result-box" id="resultBox">— Hasil akan muncul di sini —</div>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        let currentType = 'xpay';
+
+        // --- DOM refs ---
+        const btnXpay = document.getElementById('btnXpay');
+        const btnMinera = document.getElementById('btnMinera');
+        const perihalDisplay = document.getElementById('perihalDisplay');
+        const resultTypeBadge = document.getElementById('resultTypeBadge');
+        const dataInput = document.getElementById('dataInput');
+        const resultBox = document.getElementById('resultBox');
+        const copyFeedback = document.getElementById('copyFeedback');
+        const debugPanel = document.getElementById('debugPanel');
+
+        // --- Type Selector ---
+        function setType(type) {
+            currentType = type;
+            // Reset all
+            [btnXpay, btnMinera].forEach(b => {
+                b.classList.remove('active', 'xpay-active', 'minera-active');
+            });
+            if (type === 'xpay') {
+                btnXpay.classList.add('active', 'xpay-active');
+                perihalDisplay.textContent = 'Transaksi Auto Withdraw Xpay Pending';
+                resultTypeBadge.textContent = 'XPAY';
+                resultTypeBadge.className = 'chip xpay-chip';
+            } else {
+                btnMinera.classList.add('active', 'minera-active');
+                perihalDisplay.textContent = 'Transaksi Auto Withdraw Minera Pending';
+                resultTypeBadge.textContent = 'MINERA';
+                resultTypeBadge.className = 'chip minera-chip';
+            }
+            // Regenerate if result visible
+            if (resultBox.textContent.trim() && resultBox.textContent !== '— Hasil akan muncul di sini —') {
+                generateResult();
+            }
+        }
+
+        btnXpay.addEventListener('click', () => setType('xpay'));
+        btnMinera.addEventListener('click', () => setType('minera'));
+
+        // --- Tab switching ---
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = {
+            input: document.getElementById('tabInput'),
+            result: document.getElementById('tabResult')
+        };
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.dataset.tab;
+                tabBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                Object.keys(tabContents).forEach(key => {
+                    tabContents[key].classList.toggle('active', key === tab);
+                });
+            });
+        });
+
+        // --- Debug toggle ---
+        function toggleDebug() {
+            debugPanel.classList.toggle('open');
+            if (debugPanel.classList.contains('open') && !debugPanel.innerHTML.trim()) {
+                debugPanel.innerHTML = '<span style="color:#4a5a73;">➜ Generate data terlebih dahulu untuk melihat debug.</span>';
+            }
+        }
+
+        // --- Parser (same logic, improved) ---
+        function parseDataInput(inputText) {
+            if (!inputText.trim()) {
+                alert('Mohon masukkan data terlebih dahulu!');
+                return [];
+            }
+            const lines = inputText.split('\n');
+            const result = [];
+            const debug = [];
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                if (!line.trim()) continue;
+                let columns = line.split('\t');
+                debug.push(`Baris ${i+1}: ${columns.length} kolom → [${columns.join(' | ')}]`);
+                // Skip header
+                if (columns.length >= 2) {
+                    const col0 = columns[0].trim().toLowerCase();
+                    const col1 = columns[1].trim().toLowerCase();
+                    if (col0 === 'no' || col0 === 'no.' || col1 === 'user' || col1 === 'bank nama rekening' || col0 === '') {
+                        const fullLine = line.toLowerCase();
+                        if (fullLine.includes('user') && fullLine.includes('order id') && fullLine.includes('jumlah')) {
+                            debug.push(`  ↳ SKIP: Header`);
+                            continue;
+                        }
+                        if (col0 === '' && (col1 === '' || col1 === 'user')) {
+                            debug.push(`  ↳ SKIP: Header/empty`);
+                            continue;
+                        }
+                    }
+                }
+                let user = '', orderId = '', nominal = '';
+                for (let j = 0; j < columns.length; j++) {
+                    const col = columns[j].trim();
+                    if (col.includes('HOKTU-')) {
+                        orderId = col;
+                        if (j >= 2 && columns[1].trim() && !columns[1].trim().match(/^\d+$/)) user = columns[1].trim();
+                        else if (j >= 3 && columns[2].trim() && !columns[2].trim().match(/^\d+$/)) user = columns[2].trim();
+                    }
+                    if (col.match(/^\d{1,3}(,\d{3})*\.\d{2}$/)) {
+                        nominal = col.replace(/\.00$/, '');
+                    }
+                }
+                if (!orderId && columns.length >= 6) {
+                    for (let j = 4; j <= 6; j++) {
+                        if (j < columns.length && columns[j].trim().includes('HOKTU-')) {
+                            orderId = columns[j].trim();
+                            break;
+                        }
+                    }
+                }
+                if (!user && columns.length >= 2) {
+                    for (let j = 1; j < Math.min(columns.length, 4); j++) {
+                        const candidate = columns[j].trim();
+                        if (candidate && !candidate.match(/^\d+$/) && !candidate.includes('HOKTU') && candidate.length > 1) {
+                            user = candidate;
+                            break;
+                        }
+                    }
+                }
+                if (!nominal && columns.length >= 9) {
+                    for (let j = columns.length - 4; j < columns.length; j++) {
+                        if (j >= 0 && columns[j].trim().match(/^\d{1,3}(,\d{3})*\.\d{2}$/)) {
+                            nominal = columns[j].trim().replace(/\.00$/, '');
+                            break;
+                        }
+                    }
+                }
+                debug.push(`  ↳ User: "${user}" | OrderId: "${orderId}" | Nominal: "${nominal}"`);
+                if (user && orderId && nominal) {
+                    result.push({ user, orderId, nominal });
+                    debug.push(`  ↳ ✓ DITAMBAHKAN`);
+                } else {
+                    debug.push(`  ↳ ✗ DILEWATI (data tidak lengkap)`);
+                }
+            }
+            // Tampilkan debug
+            debugPanel.innerHTML = '<strong style="color:#7dd3fc;">Debug Info</strong><br>' + debug.join('<br>');
+            if (result.length === 0) {
+                alert('Data tidak valid! Cek debug info untuk detail.');
+            }
+            return result;
+        }
+
+        function formatNominal(nominal) {
+            const num = parseInt(nominal.replace(/,/g, ''));
+            if (isNaN(num)) return nominal;
+            return num.toLocaleString('en-US');
+        }
+
+        function generateResult() {
+            const inputText = dataInput.value;
+            const transactions = parseDataInput(inputText);
+            if (transactions.length === 0) return;
+
+            const serviceName = currentType === 'xpay' ? 'Xpay' : 'Minera';
+            const pihakName = currentType === 'xpay' ? 'Qris Xpay' : 'QrisMinera';
+
+            let result = "Info : HOKIJITU\n";
+            result += `Perihal : Transaksi Auto Withdraw ${serviceName} Pending\n\n`;
+            for (let i = 0; i < transactions.length; i++) {
+                const t = transactions[i];
+                result += `User ID: ${t.user}\n`;
+                result += `Transfer Ref: ${t.orderId}\n`;
+                result += `Nominal: Rp. ${formatNominal(t.nominal)}\n`;
+                if (i < transactions.length - 1) result += '\n';
+            }
+            result += '\nLampiran :\n\nKeterangan :\n';
+            result += `Untuk Saat ini Terdapat Transaksi Pengiriman Dana Auto Withdraw ${serviceName} yang sedang dalam status pending ya ko/ci dan pada admin antrian penarikan tersebut ter hold sehingga tidak sesuai durasi, perihal ini akan di cek secara berkala dan menunggu keputusan final dari pihak ${pihakName} ya ko/ci.`;
+
+            resultBox.textContent = result;
+            // Switch to result tab
+            document.querySelector('.tab-btn[data-tab="result"]').click();
+        }
+
+        function copyResult() {
+            const text = resultBox.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                copyFeedback.classList.add('show');
+                setTimeout(() => copyFeedback.classList.remove('show'), 1800);
+            }).catch(() => {
+                // Fallback
+                const area = document.createElement('textarea');
+                area.value = text;
+                document.body.appendChild(area);
+                area.select();
+                document.execCommand('copy');
+                document.body.removeChild(area);
+                copyFeedback.classList.add('show');
+                setTimeout(() => copyFeedback.classList.remove('show'), 1800);
+            });
+        }
+
+        // Inisialisasi: set type default
+        setType('xpay');
+    </script>
+</body>
+</html>
