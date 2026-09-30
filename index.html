@@ -714,9 +714,9 @@
                 const rows = [];
                 for (let i = 0; i < transactions.length; i++) {
                     const t = transactions[i];
-                    rows.push(`${t.user}\t${t.orderId}\tRp. ${formatNominal(t.nominal)}`);
+                    rows.push(`${t.user}\t${t.orderId}\t${formatNominal(t.nominal)}`);
                 }
-                // Hanya data, tanpa header (melebar ke kanan)
+                // Hanya data, tanpa header & tanpa Rp. (melebar ke kanan)
                 result = rows.join('\n');
                 resultBox.textContent = result;
                 // Switch to result tab
