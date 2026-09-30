@@ -120,7 +120,7 @@
             color: #7dd3fc;
         }
 
-        /* --- Type Selector (XPAY / MINERA) --- */
+        /* --- Type Selector (XPAY / MINERA / REPORT DOC) --- */
         .type-selector {
             display: flex;
             gap: 12px;
@@ -168,6 +168,12 @@
             color: #fbbf24;
             background: rgba(251, 191, 36, 0.1);
             box-shadow: 0 0 20px rgba(251, 191, 36, 0.05);
+        }
+        .type-btn.active.reportdoc-active {
+            border-color: #a78bfa;
+            color: #a78bfa;
+            background: rgba(167, 139, 250, 0.1);
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.05);
         }
         .type-btn .icon {
             font-size: 18px;
@@ -323,6 +329,21 @@
             border-radius: 10px;
         }
 
+        /* --- Horizontal Result Box (Report Doc) --- */
+        .result-box.horizontal {
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        .result-box.horizontal::-webkit-scrollbar {
+            height: 6px;
+            width: 5px;
+        }
+        .result-box.horizontal::-webkit-scrollbar-thumb {
+            background: #a78bfa;
+            border-radius: 10px;
+        }
+
         .result-header {
             display: flex;
             justify-content: space-between;
@@ -356,6 +377,11 @@
             color: #fbbf24;
             border-color: rgba(251, 191, 36, 0.25);
             background: rgba(251, 191, 36, 0.08);
+        }
+        .chip.reportdoc-chip {
+            color: #a78bfa;
+            border-color: rgba(167, 139, 250, 0.25);
+            background: rgba(167, 139, 250, 0.08);
         }
 
         .copy-feedback {
@@ -467,6 +493,9 @@
             <button class="type-btn" data-type="minera" id="btnMinera">
                 <span class="icon">💸</span> MINERA
             </button>
+            <button class="type-btn" data-type="reportdoc" id="btnReportDoc">
+                <span class="icon">📄</span> Report Doc
+            </button>
         </div>
 
         <!-- Tab Navigation -->
@@ -514,6 +543,7 @@
         // --- DOM refs ---
         const btnXpay = document.getElementById('btnXpay');
         const btnMinera = document.getElementById('btnMinera');
+        const btnReportDoc = document.getElementById('btnReportDoc');
         const perihalDisplay = document.getElementById('perihalDisplay');
         const resultTypeBadge = document.getElementById('resultTypeBadge');
         const dataInput = document.getElementById('dataInput');
@@ -525,19 +555,27 @@
         function setType(type) {
             currentType = type;
             // Reset all
-            [btnXpay, btnMinera].forEach(b => {
-                b.classList.remove('active', 'xpay-active', 'minera-active');
+            [btnXpay, btnMinera, btnReportDoc].forEach(b => {
+                b.classList.remove('active', 'xpay-active', 'minera-active', 'reportdoc-active');
             });
             if (type === 'xpay') {
                 btnXpay.classList.add('active', 'xpay-active');
                 perihalDisplay.textContent = 'Transaksi Auto Withdraw Xpay Pending';
                 resultTypeBadge.textContent = 'XPAY';
                 resultTypeBadge.className = 'chip xpay-chip';
-            } else {
+                resultBox.classList.remove('horizontal');
+            } else if (type === 'minera') {
                 btnMinera.classList.add('active', 'minera-active');
                 perihalDisplay.textContent = 'Transaksi Auto Withdraw Minera Pending';
                 resultTypeBadge.textContent = 'MINERA';
                 resultTypeBadge.className = 'chip minera-chip';
+                resultBox.classList.remove('horizontal');
+            } else {
+                btnReportDoc.classList.add('active', 'reportdoc-active');
+                perihalDisplay.textContent = 'Report Doc - Data Transaksi';
+                resultTypeBadge.textContent = 'REPORT DOC';
+                resultTypeBadge.className = 'chip reportdoc-chip';
+                resultBox.classList.add('horizontal');
             }
             // Regenerate if result visible
             if (resultBox.textContent.trim() && resultBox.textContent !== '— Hasil akan muncul di sini —') {
@@ -547,6 +585,7 @@
 
         btnXpay.addEventListener('click', () => setType('xpay'));
         btnMinera.addEventListener('click', () => setType('minera'));
+        btnReportDoc.addEventListener('click', () => setType('reportdoc'));
 
         // --- Tab switching ---
         const tabBtns = document.querySelectorAll('.tab-btn');
@@ -668,10 +707,28 @@
             const transactions = parseDataInput(inputText);
             if (transactions.length === 0) return;
 
+            let result = '';
+
+            // === REPORT DOC MODE (Horizontal) ===
+            if (currentType === 'reportdoc') {
+                const rows = [];
+                for (let i = 0; i < transactions.length; i++) {
+                    const t = transactions[i];
+                    rows.push(`${t.user}\t${t.orderId}\tRp. ${formatNominal(t.nominal)}`);
+                }
+                // Hanya data, tanpa header (melebar ke kanan)
+                result = rows.join('\n');
+                resultBox.textContent = result;
+                // Switch to result tab
+                document.querySelector('.tab-btn[data-tab="result"]').click();
+                return;
+            }
+
+            // === XPAY / MINERA MODE (Vertical) ===
             const serviceName = currentType === 'xpay' ? 'Xpay' : 'Minera';
             const pihakName = currentType === 'xpay' ? 'Qris Xpay' : 'QrisMinera';
 
-            let result = "Info : HOKIJITU\n";
+            result = "Info : HOKIJITU\n";
             result += `Perihal : Transaksi Auto Withdraw ${serviceName} Pending\n\n`;
             for (let i = 0; i < transactions.length; i++) {
                 const t = transactions[i];
